@@ -4,9 +4,12 @@ const assert = require('assert')
 const personBody = require('../src/data/personData.json')
 
 describe('GET', () => {
-    it('get all', async () => {
+    it('get all /// promise async await', async () => {
         const res = await request.get('/person')
+        assert(res.status == 200)
+        assert(res.header['content-type'] == 'application/json; charset=utf-8')
         assert(res.body.name == 'Mayke')
+        assert(res.body.idTroll == 1231)
     })
 
     it('endpoint inexistente', async () => {
@@ -14,6 +17,16 @@ describe('GET', () => {
         assert(res.status == 404)
     })
 
+    it('get all /// promise com then', (done) => {
+        request.get('/person')
+        .expect(200)
+        .expect('content-type', 'application/json; charset=utf-8')
+        .then(res => {
+            assert(res.body.idTroll == 1231)
+            assert(res.body.name == 'Mayke')
+            done()
+        })
+    })
 })
 
 describe('POST', () => {
