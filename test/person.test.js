@@ -1,43 +1,79 @@
-const env = require('../src/config/config')
-const request = require('supertest')(env.url)
-const assert = require('assert')
-const personBody = require('../src/data/personData.json')
+const personBody = require('../src/data/personData')
+const { personSchema, personSchemaById }  = require('../src/schemas/personSchema')
+const PersonService = require('../src/service/personService')
 
-describe('GET', () => {
-    it('get all /// promise async await', async () => {
-        const res = await request.get('/person')
-        assert(res.status == 200)
-        assert(res.header['content-type'] == 'application/json; charset=utf-8')
-        assert(res.body.name == 'Mayke')
-        assert(res.body.idTroll == 1231)
-    })
+const chai  = require('chai')
+const assert = chai.assert
+chai.use(require('chai-json-schema'))
 
-    it('endpoint inexistente', async () => {
-        const res = await request.get('/batata')
-        assert(res.status == 404)
-    })
+describe('#Person', () => {
+    const personService = new PersonService()
+    let response 
 
-    it('get all /// promise com then', (done) => {
-        request.get('/person')
-        .expect(200)
-        .expect('content-type', 'application/json; charset=utf-8')
-        .then(res => {
-            assert(res.body.idTroll == 1231)
-            assert(res.body.name == 'Mayke')
-            done()
+    describe('#GET', () => {
+        describe('Listagem Completa', () => {
+    
+            beforeAll( async () => {
+                response = await personService.getAll() 
+            })
+    
+            it('#status code', async () => {
+                assert.equal(response.status, 200)
+            })
+    
+            it('#contract', async () => {
+                assert.jsonSchema(response.body, personSchema )
+            })
+    
+            it('#headers', async () => {
+                assert.equal(response.header['content-type'], 'application/json; charset=utf-8')
+            })
+    
+            it('#response body', async () => {
+                assert.equal(response.body.idTroll, 1231)
+                assert.equal(response.body.name, 'Mayke')
+            })
+        })
+
+
+        describe('Listagem por Id', () => {    
+            beforeAll( async () => {
+                const id = 1
+                response = await personService.getById(id) 
+            })
+    
+            it('#status code', async () => {
+                assert.equal(response.status, 200)
+            })
+    
+            it('#contrato', async () => {
+                assert.jsonSchema(response.body, personSchemaById )
+            })
+    
+            it('#headers', async () => {
+                assert.equal(response.header['content-type'], 'application/json; charset=utf-8')
+            })
+    
+            it('#response body', async () => {
+                assert.equal(response.body.name, 'NomeTroll')
+            })
         })
     })
-})
 
-describe('POST', () => {
-    it('post person', async () => {
-        personBody.name = 'xaxa'
+    describe('#POST', () => {
+        describe('Criação de Usuario', () => {
+            beforeAll( async () => {
+                response = await personService.post(personBody)
+            })
 
-        const res = await request
-        .post('/person')
-        .send(personBody)
+            it('#Status Code', async () => {
+                assert.equal(response.status, 201)
+            })
 
-        assert(res.status ==  201)
-        assert(res.body.name == personBody.name)
+            it('#Response Body', async () => {
+                assert.typeOf(response.body.idTroll, 'number')
+                assert.equal(response.body.name, personBody.name)
+            })
+        })
     })
 })
